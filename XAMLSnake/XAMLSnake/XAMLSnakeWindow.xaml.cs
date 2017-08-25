@@ -34,7 +34,7 @@ namespace XAMLSnake
         private int headSize = 64;
         private int NbBonus = 15;
 
-        private TimeSpan FAST = new TimeSpan(1000);
+        private TimeSpan FAST = new TimeSpan(10000);
         /*
         private TimeSpan MODERATE = new TimeSpan(10000);
         private TimeSpan SLOW = new TimeSpan(100000);
@@ -75,7 +75,7 @@ namespace XAMLSnake
         private int BodyPos;
         public XAMLSnakeWindow()
         {
-            HeadPos = NbBonus;
+            HeadPos = NbBonus + 1;
             BodyPos = HeadPos + 1;
 
             InitializeComponent();
@@ -233,10 +233,13 @@ namespace XAMLSnake
                     break;
             }
 
-            snakePoints.Insert(0, currentPosition);
-            if (snakePoints.Count > length)
+            if (direction != MovingDirection.None)
             {
-                snakePoints.RemoveAt(length);
+                snakePoints.Insert(0, currentPosition);
+                if (snakePoints.Count > length)
+                {
+                    snakePoints.RemoveAt(length);
+                }
             }
 
             MoveSnakePart();
