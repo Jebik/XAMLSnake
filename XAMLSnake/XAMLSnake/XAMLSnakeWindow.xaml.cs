@@ -35,7 +35,7 @@ namespace XAMLSnake
         private int fluidity = 64;
         private int NbBonus = 15;
 
-        private TimeSpan FAST = new TimeSpan(10000);
+        private TimeSpan FAST = new TimeSpan(1000000);
         /*
         private TimeSpan MODERATE = new TimeSpan(10000);
         private TimeSpan SLOW = new TimeSpan(100000);
