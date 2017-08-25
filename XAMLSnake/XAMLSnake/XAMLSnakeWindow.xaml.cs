@@ -244,7 +244,7 @@ namespace XAMLSnake
 
             if (direction != MovingDirection.None)
             {
-                for (int i = 0; i < fluidity; i++)
+                for (int i = 1; i <= fluidity; i++)
                 {
                     Point pos = new Point(prevPos.X + i * XMove, prevPos.Y + i * YMove);
                     snakePoints.Insert(0, pos);
