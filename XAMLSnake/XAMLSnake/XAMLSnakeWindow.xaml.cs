@@ -254,11 +254,7 @@ namespace XAMLSnake
             aRotateTransform.Angle = rot;
 
             Rectangle headRectangle = GameCanvas.Children[HeadPos] as Rectangle;
-            if (headRectangle == null)
-            {
-                this.Close();
-            }
-            headRectangle.RenderTransform = aRotateTransform;
+            headRectangle.LayoutTransform = aRotateTransform;
             Canvas.SetTop(headRectangle, currentPosition.Y);
             Canvas.SetLeft(headRectangle, currentPosition.X);
             int snakePointsInc = headSize;
@@ -266,11 +262,6 @@ namespace XAMLSnake
             for (int i = BodyPos; i < GameCanvas.Children.Count && snakePointsInc < snakePoints.Count; i++)
             {
                 Rectangle bodyRectangle = GameCanvas.Children[i] as Rectangle;
-                if (bodyRectangle == null)
-                {
-                    this.Close();
-                }
-                bodyRectangle.RenderTransform = aRotateTransform;
                 Canvas.SetTop(bodyRectangle, snakePoints[snakePointsInc].Y);
                 Canvas.SetLeft(bodyRectangle, snakePoints[snakePointsInc].X);
                 snakePointsInc += headSize;
