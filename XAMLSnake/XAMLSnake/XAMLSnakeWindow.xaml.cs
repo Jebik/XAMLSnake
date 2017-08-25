@@ -35,7 +35,8 @@ namespace XAMLSnake
         private int fluidity = 64;
         private int NbBonus = 15;
 
-        private TimeSpan FAST = new TimeSpan(1000000);
+        // 1/8 s
+        private TimeSpan FAST = new TimeSpan(0, 0, 0, 0, 1000 / 8);
         /*
         private TimeSpan MODERATE = new TimeSpan(10000);
         private TimeSpan SLOW = new TimeSpan(100000);
@@ -78,6 +79,7 @@ namespace XAMLSnake
         {
             HeadPos = NbBonus + 1;
             BodyPos = HeadPos + 1;
+            // 2 box  / s
             fluidity = headSize / 4;
 
             InitializeComponent();
