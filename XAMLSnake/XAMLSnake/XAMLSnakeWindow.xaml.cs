@@ -66,8 +66,18 @@ namespace XAMLSnake
             [MovingDirection.Right] = 90,
         };
 
+        private int GetRotation()
+        {
+            return RotationAngles.TryGetValue(direction, out var angle) ? angle : 0;
+        }
+
+        private int HeadPos;
+        private int BodyPos;
         public XAMLSnakeWindow()
         {
+            HeadPos = NbBonus;
+            BodyPos = HeadPos + 1;
+
             InitializeComponent();
             Loaded += LoadGame;
             KeyDown += new KeyEventHandler(OnButtonKeyDown);
@@ -75,8 +85,8 @@ namespace XAMLSnake
 
         private void LoadGame(object sender, RoutedEventArgs e)
         {
-            YSIZE = (int)BackGround.ActualHeight;
-            XSIZE = (int)BackGround.ActualWidth;
+            YSIZE = (int)GameCanvas.ActualHeight;
+            XSIZE = (int)GameCanvas.ActualWidth;
             paintBackground();
             BitmapImage headImg = new BitmapImage(new Uri("Images/SnakeHEad.png", UriKind.Relative));
             _headBrush = new ImageBrush(headImg);
@@ -95,14 +105,14 @@ namespace XAMLSnake
             _timer.Interval = FAST;
             _timer.Start();
             paintBackground();
-            startingPoint.X = (int)(BackGround.ActualWidth / 2);
-            startingPoint.Y = (int)(BackGround.ActualHeight / 2);
+            startingPoint.X = (int)(GameCanvas.ActualWidth / 2);
+            startingPoint.Y = (int)(GameCanvas.ActualHeight / 2);
             for (int n = 0; n < NbBonus; n++)
             {
                 paintBonus(n);
             }
 
-            paintSnake(startingPoint);
+            AddSnakeHeadCanvas(startingPoint);
             currentPosition = startingPoint;
         }
         private void paintBackground()
@@ -113,72 +123,25 @@ namespace XAMLSnake
             newRectangle.Height = YSIZE;
             Canvas.SetTop(newRectangle, 0);
             Canvas.SetLeft(newRectangle, 0);
-            if (BackGround.Children.Count > 0)
+            if (GameCanvas.Children.Count > 0)
             {
-                BackGround.Children.RemoveAt(0);
+                GameCanvas.Children.RemoveAt(0);
             }
-            BackGround.Children.Insert(0, newRectangle);
+            GameCanvas.Children.Insert(0, newRectangle);
         }
 
-
-        private void paintSnake(Point currentposition)
+        private void AddSnakeHeadCanvas(Point currentposition)
         {
-            cleanSnake();
-            paintSnakeHead(currentposition);
-            paintSnakeBody(currentposition);
-        }
-        private void cleanSnake()
-        {
-            var count = BackGround.Children.Count;
-            var toDel = count - (NbBonus + 1);
-            BackGround.Children.RemoveRange(NbBonus + 1, toDel);
-        }
-        private void paintSnakeHead(Point currentposition)
-        {
-            var rot = GetRotation();
-            RotateTransform aRotateTransform = new RotateTransform();
-            aRotateTransform.CenterX = 0.5;
-            aRotateTransform.CenterY = 0.5;
-            aRotateTransform.Angle = rot;
-            _headBrush.RelativeTransform = aRotateTransform;
             Rectangle headRect = new Rectangle();
             headRect.Fill = _headBrush;
             headRect.Height = headSize;
             headRect.Width = headSize;
+
             Canvas.SetTop(headRect, currentposition.Y);
             Canvas.SetLeft(headRect, currentposition.X);
-            //On decale tout les point du snake
-            snakePoints.Insert(0, currentposition);
-            BackGround.Children.Add(headRect);
-            int count = snakePoints.Count;
-            // Restrict the tail of the snake
-            if (count > length)
-            {
-                snakePoints.RemoveAt(length);
-            }
-        }
-        private int GetRotation()
-        {
-            return RotationAngles.TryGetValue(direction, out var angle) ? angle : 0;
+            GameCanvas.Children.Add(headRect);
         }
 
-        private void paintSnakeBody(Point currentposition)
-        {
-            for (int i = 1; i < snakePoints.Count; i++)
-            {
-                //On ne dessinne un cercle que tout les headsize position
-                if (i % headSize == 0)
-                {
-                    Rectangle bodyRect = new Rectangle();
-                    bodyRect.Fill = _bodyBrush;
-                    bodyRect.Height = headSize;
-                    bodyRect.Width = headSize;
-                    Canvas.SetTop(bodyRect, snakePoints[i].Y);
-                    Canvas.SetLeft(bodyRect, snakePoints[i].X);
-                    BackGround.Children.Add(bodyRect);
-                }
-            }
-        }
         private void paintBonus(int index)
         {
             Point bonusPoint = new Point(rnd.Next(headSize, XSIZE), rnd.Next(headSize, YSIZE));
@@ -190,52 +153,14 @@ namespace XAMLSnake
             bodyRect.Width = headSize;
             Canvas.SetTop(bodyRect, bonusPoint.Y);
             Canvas.SetLeft(bodyRect, bonusPoint.X);
-            BackGround.Children.Insert(index + 1, bodyRect);
+            GameCanvas.Children.Insert(index + 1, bodyRect);
             bonusPoints.Insert(index, bonusPoint);
         }
+
         private void timer_Tick(object sender, EventArgs e)
         {
-            var previousPosition = currentPosition;
-            // Expand the body of the snake to the direction of movement
-            switch (direction)
-            {
-                case MovingDirection.Down:
-                    currentPosition.Y += 1;
-                    if (currentPosition.Y % headSize == 0)
-                    {
-                        previousDirection = direction;
-                        direction = nextDirection;
-                    }
-                    paintSnake(currentPosition);
-                    break;
-                case MovingDirection.Up:
-                    currentPosition.Y -= 1;
-                    if (currentPosition.Y % headSize == 0)
-                    {
-                        previousDirection = direction;
-                        direction = nextDirection;
-                    }
-                    paintSnake(currentPosition);
-                    break;
-                case MovingDirection.Left:
-                    currentPosition.X -= 1;
-                    if (currentPosition.X % headSize == 0)
-                    {
-                        previousDirection = direction;
-                        direction = nextDirection;
-                    }
-                    paintSnake(currentPosition);
-                    break;
-                case MovingDirection.Right:
-                    currentPosition.X += 1;
-                    if (currentPosition.X % headSize == 0)
-                    {
-                        previousDirection = direction;
-                        direction = nextDirection;
-                    }
-                    paintSnake(currentPosition);
-                    break;
-            }
+            MoveSnakePos();
+
             if ((currentPosition.X < 0) || (currentPosition.X > XSIZE) ||
                 (currentPosition.Y < 0) || (currentPosition.Y > YSIZE))
                 GameOver();
@@ -249,7 +174,7 @@ namespace XAMLSnake
                     length += headSize;
                     score += 10;
                     bonusPoints.RemoveAt(n);
-                    BackGround.Children.RemoveAt(n + 1);
+                    GameCanvas.Children.RemoveAt(n + 1);
                     paintBonus(n);
                     break;
                 }
@@ -269,6 +194,106 @@ namespace XAMLSnake
             var titleString = "Time " + new DateTime(time.Ticks).ToString("HH:mm:ss") + "       Score " + score;
             this.Title = titleString;
         }
+
+        private void MoveSnakePos()
+        {
+            switch (direction)
+            {
+                case MovingDirection.Down:
+                    currentPosition.Y += 1;
+                    if (currentPosition.Y % headSize == 0)
+                    {
+                        previousDirection = direction;
+                        direction = nextDirection;
+                    }
+                    break;
+                case MovingDirection.Up:
+                    currentPosition.Y -= 1;
+                    if (currentPosition.Y % headSize == 0)
+                    {
+                        previousDirection = direction;
+                        direction = nextDirection;
+                    }
+                    break;
+                case MovingDirection.Left:
+                    currentPosition.X -= 1;
+                    if (currentPosition.X % headSize == 0)
+                    {
+                        previousDirection = direction;
+                        direction = nextDirection;
+                    }
+                    break;
+                case MovingDirection.Right:
+                    currentPosition.X += 1;
+                    if (currentPosition.X % headSize == 0)
+                    {
+                        previousDirection = direction;
+                        direction = nextDirection;
+                    }
+                    break;
+            }
+
+            snakePoints.Insert(0, currentPosition);
+            if (snakePoints.Count > length)
+            {
+                snakePoints.RemoveAt(length);
+            }
+
+            MoveSnakePart();
+        }
+
+        private void MoveSnakePart()
+        {
+            var rot = GetRotation();
+            RotateTransform aRotateTransform = new RotateTransform();
+            aRotateTransform.CenterX = 0.5;
+            aRotateTransform.CenterY = 0.5;
+            aRotateTransform.Angle = rot;
+
+            Rectangle headRectangle = GameCanvas.Children[HeadPos] as Rectangle;
+            if (headRectangle == null)
+            {
+                this.Close();
+            }
+            headRectangle.RenderTransform = aRotateTransform;
+            Canvas.SetTop(headRectangle, currentPosition.Y);
+            Canvas.SetLeft(headRectangle, currentPosition.X);
+            int snakePoint = headSize;
+
+            for (int i = BodyPos; i < GameCanvas.Children.Count; i++)
+            {
+                snakePoint += headSize;
+                Rectangle bodyRectangle = GameCanvas.Children[i] as Rectangle;
+                if (bodyRectangle == null)
+                {
+                    this.Close();
+                }
+                bodyRectangle.RenderTransform = aRotateTransform;
+                Canvas.SetTop(bodyRectangle, snakePoints[i].Y);
+                Canvas.SetLeft(bodyRectangle, snakePoints[i].X);
+            }
+
+            for (int i = snakePoint; i < snakePoints.Count; i++)
+            {
+                if (i % headSize == 0)
+                {
+                    AddNewBodyPart(snakePoints[i].Y, snakePoints[i].X);
+                }
+            }
+
+        }
+
+        private void AddNewBodyPart(double y, double x)
+        {
+            Rectangle bodyRect = new Rectangle();
+            bodyRect.Fill = _bodyBrush;
+            bodyRect.Height = headSize;
+            bodyRect.Width = headSize;
+            Canvas.SetTop(bodyRect, y);
+            Canvas.SetLeft(bodyRect, x);
+            GameCanvas.Children.Add(bodyRect);
+        }
+
         private void OnButtonKeyDown(object sender, KeyEventArgs e)
         {
             switch (e.Key)

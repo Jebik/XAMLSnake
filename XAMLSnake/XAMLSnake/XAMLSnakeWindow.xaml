@@ -7,7 +7,7 @@
         ResizeMode="NoResize"  
         WindowStartupLocation="CenterScreen" WindowState="Maximized"
         Title="XAMLSnake" Height="auto" Width="auto">
-    <Canvas Name="BackGround" Background="Red"></Canvas>
+    <Canvas Name="GameCanvas" Background="Red"></Canvas>
 <!--    <Canvas Name="Bonus" Background="Red"></Canvas>
     <Canvas Name="Snake" Background="Red"></Canvas>-->
 </Window>
