@@ -16,43 +16,37 @@ namespace XAMLSnake
     /// </summary>
     public partial class XAMLSnakeWindow : Window
     {
-        // This list describes the Bonus Red pieces of Food on the Canvas
         private List<Point> bonusPoints = new List<Point>();
-        // This list describes the body of the snake on the Canvas
         private List<Point> snakePoints = new List<Point>();
-        private enum MOVINGDIRECTION
+        private enum MovingDirection
         {
-            UPWARDS = 8,
-            DOWNWARDS = 2,
-            TOLEFT = 4,
-            TORIGHT = 6
+            None,
+            Up,
+            Down,
+            Left,
+            Right
         };
         // Change au resize 
         private int XSIZE;
         private int YSIZE;
+
         //CONFIG 
         private int headSize = 64;
         private int NbBonus = 15;
-        //Only one will stay
+
         private TimeSpan FAST = new TimeSpan(1000);
+        /*
         private TimeSpan MODERATE = new TimeSpan(10000);
         private TimeSpan SLOW = new TimeSpan(100000);
         private TimeSpan DAMNSLOW = new TimeSpan(1000000);
+        */
+
         private Point startingPoint = new Point();
         private Point currentPosition = new Point();
-        //BG must always be at pos 0
-        //bonus at pos 1-nbBonus
-        //Head at pos NbBonus+1
-        //Body follow
-        // Movement direction initialisation
-        private int direction = 0;
-        /* Placeholder for the next movement direction
-         * used to move Case by case
-         * The snake needs this to avoid its own body.  */
-        private int nextDirection = 0;
-        /* Placeholder for the previous movement direction
-         * The snake needs this to avoid its own body.  */
-        private int previousDirection = 0;
+
+        private MovingDirection direction = MovingDirection.None;
+        private MovingDirection nextDirection = MovingDirection.None;
+        private MovingDirection previousDirection = MovingDirection.None;
         private int length;
         private int score = 0;
         private Random rnd = new Random();
@@ -63,18 +57,27 @@ namespace XAMLSnake
         private ImageBrush _bonusBrush;
         private ImageBrush _bgBrush;
 
+        private static readonly Dictionary<MovingDirection, int> RotationAngles =
+        new Dictionary<MovingDirection, int>
+        {
+            [MovingDirection.Down] = 180,
+            [MovingDirection.Up] = 0,
+            [MovingDirection.Left] = 270,
+            [MovingDirection.Right] = 90,
+        };
+
         public XAMLSnakeWindow()
         {
             InitializeComponent();
             Loaded += LoadGame;
             KeyDown += new KeyEventHandler(OnButtonKeyDown);
         }
+
         private void LoadGame(object sender, RoutedEventArgs e)
         {
-            YSIZE = (int)paintCanvas.ActualHeight;
-            XSIZE = (int)paintCanvas.ActualWidth;
+            YSIZE = (int)BackGround.ActualHeight;
+            XSIZE = (int)BackGround.ActualWidth;
             paintBackground();
-            //On load un brush
             BitmapImage headImg = new BitmapImage(new Uri("Images/SnakeHEad.png", UriKind.Relative));
             _headBrush = new ImageBrush(headImg);
             BitmapImage bodyImg = new BitmapImage(new Uri("Images/SnakeBody.png", UriKind.Relative));
@@ -83,22 +86,22 @@ namespace XAMLSnake
             _bonusBrush = new ImageBrush(bonusImg);
             BitmapImage bgImg = new BitmapImage(new Uri("Images/SnakeBg.png", UriKind.Relative));
             _bgBrush = new ImageBrush(bgImg);
+
+
             length = headSize * 3;
             _stopwatch = Stopwatch.StartNew();
             _timer = new DispatcherTimer();
             _timer.Tick += new EventHandler(timer_Tick);
-            /* Here user can change the speed of the snake. 
-             * Possible speeds are FAST, MODERATE, SLOW and DAMNSLOW */
             _timer.Interval = FAST;
             _timer.Start();
             paintBackground();
-            startingPoint.X = (int)(paintCanvas.ActualWidth / 2);
-            startingPoint.Y = (int)(paintCanvas.ActualHeight / 2);
-            // Instantiate Food Objects
+            startingPoint.X = (int)(BackGround.ActualWidth / 2);
+            startingPoint.Y = (int)(BackGround.ActualHeight / 2);
             for (int n = 0; n < NbBonus; n++)
             {
                 paintBonus(n);
             }
+
             paintSnake(startingPoint);
             currentPosition = startingPoint;
         }
@@ -110,12 +113,14 @@ namespace XAMLSnake
             newRectangle.Height = YSIZE;
             Canvas.SetTop(newRectangle, 0);
             Canvas.SetLeft(newRectangle, 0);
-            if (paintCanvas.Children.Count > 0)
+            if (BackGround.Children.Count > 0)
             {
-                paintCanvas.Children.RemoveAt(0);
+                BackGround.Children.RemoveAt(0);
             }
-            paintCanvas.Children.Insert(0, newRectangle);
+            BackGround.Children.Insert(0, newRectangle);
         }
+
+
         private void paintSnake(Point currentposition)
         {
             cleanSnake();
@@ -124,9 +129,9 @@ namespace XAMLSnake
         }
         private void cleanSnake()
         {
-            var count = paintCanvas.Children.Count;
+            var count = BackGround.Children.Count;
             var toDel = count - (NbBonus + 1);
-            paintCanvas.Children.RemoveRange(NbBonus + 1, toDel);
+            BackGround.Children.RemoveRange(NbBonus + 1, toDel);
         }
         private void paintSnakeHead(Point currentposition)
         {
@@ -144,7 +149,7 @@ namespace XAMLSnake
             Canvas.SetLeft(headRect, currentposition.X);
             //On decale tout les point du snake
             snakePoints.Insert(0, currentposition);
-            paintCanvas.Children.Add(headRect);
+            BackGround.Children.Add(headRect);
             int count = snakePoints.Count;
             // Restrict the tail of the snake
             if (count > length)
@@ -154,20 +159,9 @@ namespace XAMLSnake
         }
         private int GetRotation()
         {
-            switch (direction)
-            {
-                case (int)MOVINGDIRECTION.DOWNWARDS:
-                    return 180;
-                case (int)MOVINGDIRECTION.UPWARDS:
-                    return 0;
-                case (int)MOVINGDIRECTION.TOLEFT:
-                    return 270;
-                case (int)MOVINGDIRECTION.TORIGHT:
-                    return 90;
-                default:
-                    return 0;
-            }
+            return RotationAngles.TryGetValue(direction, out var angle) ? angle : 0;
         }
+
         private void paintSnakeBody(Point currentposition)
         {
             for (int i = 1; i < snakePoints.Count; i++)
@@ -181,7 +175,7 @@ namespace XAMLSnake
                     bodyRect.Width = headSize;
                     Canvas.SetTop(bodyRect, snakePoints[i].Y);
                     Canvas.SetLeft(bodyRect, snakePoints[i].X);
-                    paintCanvas.Children.Add(bodyRect);
+                    BackGround.Children.Add(bodyRect);
                 }
             }
         }
@@ -196,7 +190,7 @@ namespace XAMLSnake
             bodyRect.Width = headSize;
             Canvas.SetTop(bodyRect, bonusPoint.Y);
             Canvas.SetLeft(bodyRect, bonusPoint.X);
-            paintCanvas.Children.Insert(index + 1, bodyRect);
+            BackGround.Children.Insert(index + 1, bodyRect);
             bonusPoints.Insert(index, bonusPoint);
         }
         private void timer_Tick(object sender, EventArgs e)
@@ -205,7 +199,7 @@ namespace XAMLSnake
             // Expand the body of the snake to the direction of movement
             switch (direction)
             {
-                case (int)MOVINGDIRECTION.DOWNWARDS:
+                case MovingDirection.Down:
                     currentPosition.Y += 1;
                     if (currentPosition.Y % headSize == 0)
                     {
@@ -214,7 +208,7 @@ namespace XAMLSnake
                     }
                     paintSnake(currentPosition);
                     break;
-                case (int)MOVINGDIRECTION.UPWARDS:
+                case MovingDirection.Up:
                     currentPosition.Y -= 1;
                     if (currentPosition.Y % headSize == 0)
                     {
@@ -223,7 +217,7 @@ namespace XAMLSnake
                     }
                     paintSnake(currentPosition);
                     break;
-                case (int)MOVINGDIRECTION.TOLEFT:
+                case MovingDirection.Left:
                     currentPosition.X -= 1;
                     if (currentPosition.X % headSize == 0)
                     {
@@ -232,7 +226,7 @@ namespace XAMLSnake
                     }
                     paintSnake(currentPosition);
                     break;
-                case (int)MOVINGDIRECTION.TORIGHT:
+                case MovingDirection.Right:
                     currentPosition.X += 1;
                     if (currentPosition.X % headSize == 0)
                     {
@@ -242,11 +236,10 @@ namespace XAMLSnake
                     paintSnake(currentPosition);
                     break;
             }
-            // Restrict to boundaries of the Canvas
             if ((currentPosition.X < 0) || (currentPosition.X > XSIZE) ||
                 (currentPosition.Y < 0) || (currentPosition.Y > YSIZE))
                 GameOver();
-            // Hitting a bonus Point causes the lengthen-Snake Effect
+
             int n = 0;
             foreach (Point point in bonusPoints)
             {
@@ -255,16 +248,13 @@ namespace XAMLSnake
                 {
                     length += headSize;
                     score += 10;
-                    // In the case of food consumption, erase the food object
-                    // from the list of bonuses as well as from the canvas
                     bonusPoints.RemoveAt(n);
-                    paintCanvas.Children.RemoveAt(n + 1);
+                    BackGround.Children.RemoveAt(n + 1);
                     paintBonus(n);
                     break;
                 }
                 n++;
             }
-            // Restrict hits to body of Snake
             for (int q = headSize * 2; q < snakePoints.Count; q++)
             {
                 Point point = new Point(snakePoints[q].X, snakePoints[q].Y);
@@ -284,20 +274,20 @@ namespace XAMLSnake
             switch (e.Key)
             {
                 case Key.Down:
-                    if (previousDirection != (int)MOVINGDIRECTION.UPWARDS)
-                        nextDirection = (int)MOVINGDIRECTION.DOWNWARDS;
+                    if (previousDirection != MovingDirection.Up)
+                        nextDirection = MovingDirection.Down;
                     break;
                 case Key.Up:
-                    if (previousDirection != (int)MOVINGDIRECTION.DOWNWARDS)
-                        nextDirection = (int)MOVINGDIRECTION.UPWARDS;
+                    if (previousDirection != MovingDirection.Down)
+                        nextDirection = MovingDirection.Up;
                     break;
                 case Key.Left:
-                    if (previousDirection != (int)MOVINGDIRECTION.TORIGHT)
-                        nextDirection = (int)MOVINGDIRECTION.TOLEFT;
+                    if (previousDirection != MovingDirection.Right)
+                        nextDirection = MovingDirection.Left;
                     break;
                 case Key.Right:
-                    if (previousDirection != (int)MOVINGDIRECTION.TOLEFT)
-                        nextDirection = (int)MOVINGDIRECTION.TORIGHT;
+                    if (previousDirection != MovingDirection.Left)
+                        nextDirection = MovingDirection.Right;
                     break;
                 case Key.Escape:
                     _timer.Stop();
