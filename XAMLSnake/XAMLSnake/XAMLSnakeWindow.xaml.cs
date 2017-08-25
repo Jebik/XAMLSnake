@@ -258,22 +258,22 @@ namespace XAMLSnake
             headRectangle.RenderTransform = aRotateTransform;
             Canvas.SetTop(headRectangle, currentPosition.Y);
             Canvas.SetLeft(headRectangle, currentPosition.X);
-            int snakePoint = headSize;
+            int snakePointsInc = headSize;
 
             for (int i = BodyPos; i < GameCanvas.Children.Count; i++)
             {
-                snakePoint += headSize;
                 Rectangle bodyRectangle = GameCanvas.Children[i] as Rectangle;
                 if (bodyRectangle == null)
                 {
                     this.Close();
                 }
                 bodyRectangle.RenderTransform = aRotateTransform;
-                Canvas.SetTop(bodyRectangle, snakePoints[i].Y);
-                Canvas.SetLeft(bodyRectangle, snakePoints[i].X);
+                Canvas.SetTop(bodyRectangle, snakePoints[snakePointsInc].Y);
+                Canvas.SetLeft(bodyRectangle, snakePoints[snakePointsInc].X);
+                snakePointsInc += headSize;
             }
 
-            for (int i = snakePoint; i < snakePoints.Count; i++)
+            for (int i = snakePointsInc; i < snakePoints.Count; i++)
             {
                 if (i % headSize == 0)
                 {
