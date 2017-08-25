@@ -260,7 +260,7 @@ namespace XAMLSnake
             Canvas.SetLeft(headRectangle, currentPosition.X);
             int snakePointsInc = headSize;
 
-            for (int i = BodyPos; i < GameCanvas.Children.Count; i++)
+            for (int i = BodyPos; i < GameCanvas.Children.Count && snakePointsInc < snakePoints.Count; i++)
             {
                 Rectangle bodyRectangle = GameCanvas.Children[i] as Rectangle;
                 if (bodyRectangle == null)
