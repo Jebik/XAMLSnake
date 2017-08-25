@@ -32,6 +32,7 @@ namespace XAMLSnake
 
         //CONFIG 
         private int headSize = 64;
+        private int fluidity = 64;
         private int NbBonus = 15;
 
         private TimeSpan FAST = new TimeSpan(10000);
@@ -77,6 +78,7 @@ namespace XAMLSnake
         {
             HeadPos = NbBonus + 1;
             BodyPos = HeadPos + 1;
+            fluidity = headSize / 4;
 
             InitializeComponent();
             Loaded += LoadGame;
@@ -197,10 +199,14 @@ namespace XAMLSnake
 
         private void MoveSnakePos()
         {
+            var prevPos = currentPosition;
+            var YMove = 0;
+            var XMove = 0;
             switch (direction)
             {
                 case MovingDirection.Down:
-                    currentPosition.Y += 1;
+                    currentPosition.Y += fluidity;
+                    YMove = 1;
                     if (currentPosition.Y % headSize == 0)
                     {
                         previousDirection = direction;
@@ -208,7 +214,8 @@ namespace XAMLSnake
                     }
                     break;
                 case MovingDirection.Up:
-                    currentPosition.Y -= 1;
+                    currentPosition.Y -= fluidity;
+                    YMove = -1;
                     if (currentPosition.Y % headSize == 0)
                     {
                         previousDirection = direction;
@@ -216,7 +223,8 @@ namespace XAMLSnake
                     }
                     break;
                 case MovingDirection.Left:
-                    currentPosition.X -= 1;
+                    currentPosition.X -= fluidity;
+                    XMove = -1;
                     if (currentPosition.X % headSize == 0)
                     {
                         previousDirection = direction;
@@ -224,7 +232,8 @@ namespace XAMLSnake
                     }
                     break;
                 case MovingDirection.Right:
-                    currentPosition.X += 1;
+                    currentPosition.X += fluidity;
+                    XMove = 1;
                     if (currentPosition.X % headSize == 0)
                     {
                         previousDirection = direction;
@@ -235,13 +244,16 @@ namespace XAMLSnake
 
             if (direction != MovingDirection.None)
             {
-                snakePoints.Insert(0, currentPosition);
-                if (snakePoints.Count > length)
+                for (int i = 0; i < fluidity; i++)
                 {
-                    snakePoints.RemoveAt(length);
+                    Point pos = new Point(prevPos.X + i * XMove, prevPos.Y + i * YMove);
+                    snakePoints.Insert(0, pos);
+                    if (snakePoints.Count > length)
+                    {
+                        snakePoints.RemoveAt(length);
+                    }
                 }
             }
-
             MoveSnakePart();
         }
 
